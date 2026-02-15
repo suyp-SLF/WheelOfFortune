@@ -67,4 +67,252 @@
         canvas {
             width: 100%;
             height: 100%;
-            border-radius
+            border-radius: 50%;
+            display: block;
+        }
+
+        /* 指针设计 */
+        .pointer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 70px;
+            height: 70px;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .pointer-arrow {
+            position: absolute;
+            top: -25px;
+            left: 20px;
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-bottom: 35px solid #2f3542;
+        }
+
+        .pointer-center {
+            width: 70px;
+            height: 70px;
+            background: #2f3542;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            box-shadow: 0 4px 0 #000;
+            transition: transform 0.1s;
+        }
+
+        .pointer:active .pointer-center {
+            transform: scale(0.95);
+            box-shadow: 0 2px 0 #000;
+        }
+
+        .result-panel {
+            margin-top: 40px;
+            text-align: center;
+            min-height: 80px;
+        }
+
+        #resultText {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>WhirlWin 🎡</h1>
+
+    <div class="config-controls" id="btnGroup"></div>
+
+    <div class="wheel-outer">
+        <canvas id="wheelCanvas" width="800" height="800"></canvas>
+        <div class="pointer" id="spinBtn">
+            <div class="pointer-arrow"></div>
+            <div class="pointer-center">GO!</div>
+        </div>
+    </div>
+
+    <div class="result-panel">
+        <div id="resultText">准备好开始了吗？</div>
+    </div>
+
+    <script id="wheelConfig" type="application/json">
+    {
+        "food": {
+            "name": "中午吃啥",
+            "prizes": [
+                { "text": "黄焖鸡", "color": "#ff9f43" },
+                { "text": "麻辣烫", "color": "#ee5253" },
+                { "text": "萨莉亚", "color": "#1dd1a1" },
+                { "text": "麦当劳", "color": "#feca57" },
+                { "text": "便利店", "color": "#54a0ff" },
+                { "text": "减脂沙拉", "color": "#8c7ae6" }
+            ]
+        },
+        "game": {
+            "name": "真心话大冒险",
+            "prizes": [
+                { "text": "真心话", "color": "#00d2d3" },
+                { "text": "大冒险", "color": "#ff6b6b" },
+                { "text": "罚一杯", "color": "#48dbfb" },
+                { "text": "唱首歌", "color": "#ff9ff3" },
+                { "text": "模仿秀", "color": "#f368e0" }
+            ]
+        },
+        "todo": {
+            "name": "谁去干活",
+            "prizes": [
+                { "text": "你去", "color": "#576574" },
+                { "text": "我去", "color": "#222f3e" },
+                { "text": "他去", "color": "#576574" },
+                { "text": "大家一起", "color": "#222f3e" }
+            ]
+        }
+    }
+    </script>
+
+    <script>
+        // 核心变量
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const resultText = document.getElementById('resultText');
+        
+        let wheelConfigs = {};
+        let currentConfig = null;
+        let currentAngle = 0;
+        let isSpinning = false;
+
+        // 1. 初始化：从脚本标签读取 JSON
+        function init() {
+            try {
+                const configData = document.getElementById('wheelConfig').textContent;
+                wheelConfigs = JSON.parse(configData);
+                
+                const btnGroup = document.getElementById('btnGroup');
+                Object.keys(wheelConfigs).forEach((key, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = `tab-btn ${index === 0 ? 'active' : ''}`;
+                    btn.innerText = wheelConfigs[key].name;
+                    btn.onclick = () => switchConfig(key, btn);
+                    btnGroup.appendChild(btn);
+                });
+
+                currentConfig = wheelConfigs[Object.keys(wheelConfigs)[0]];
+                drawWheel();
+            } catch (e) {
+                console.error("JSON 配置解析错误", e);
+            }
+        }
+
+        // 2. 切换配置
+        function switchConfig(key, btn) {
+            if (isSpinning) return;
+            currentConfig = wheelConfigs[key];
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentAngle = 0;
+            resultText.innerText = "切换至：" + currentConfig.name;
+            drawWheel();
+        }
+
+        // 3. 绘制转盘
+        function drawWheel() {
+            const prizes = currentConfig.prizes;
+            const numPrizes = prizes.length;
+            const arc = (Math.PI * 2) / numPrizes;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = centerX - 20;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            prizes.forEach((prize, i) => {
+                const angle = currentAngle + i * arc;
+                
+                // 绘制扇形
+                ctx.beginPath();
+                ctx.fillStyle = prize.color;
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, angle, angle + arc);
+                ctx.fill();
+                
+                // 绘制分割线
+                ctx.strokeStyle = "rgba(255,255,255,0.3)";
+                ctx.lineWidth = 4;
+                ctx.stroke();
+
+                // 绘制文字
+                ctx.save();
+                ctx.fillStyle = "white";
+                ctx.font = "bold 32px sans-serif";
+                ctx.translate(centerX, centerY);
+                ctx.rotate(angle + arc / 2);
+                const textWidth = ctx.measureText(prize.text).width;
+                ctx.fillText(prize.text, radius / 2, 10);
+                ctx.restore();
+            });
+        }
+
+        // 4. 旋转动画逻辑
+        function spin() {
+            if (isSpinning) return;
+            isSpinning = true;
+            resultText.innerText = "祝你好运...";
+
+            const duration = 4000 + Math.random() * 2000; // 4-6秒
+            const startAngle = currentAngle;
+            const rotateAngle = (Math.PI * 2) * (10 + Math.random() * 10); // 旋转10-20圈
+            const startTime = performance.now();
+
+            function animate(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // 减速曲线 (Cubic Ease Out)
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                
+                currentAngle = startAngle + rotateAngle * easeOut;
+                drawWheel();
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    isSpinning = false;
+                    calculateResult();
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        // 5. 计算中奖结果
+        function calculateResult() {
+            const prizes = currentConfig.prizes;
+            const arc = (Math.PI * 2) / prizes.length;
+            
+            // 指针在顶部 (1.5 * PI 位置)
+            // 需要计算哪个区域落在了该位置
+            const normalizedAngle = (currentAngle + Math.PI / 2) % (Math.PI * 2);
+            const reverseAngle = (Math.PI * 2) - normalizedAngle;
+            const index = Math.floor(reverseAngle / arc) % prizes.length;
+            
+            const result = prizes[index].text;
+            resultText.innerText = `🎉 结果是：${result}！`;
+        }
+
+        document.getElementById('spinBtn').addEventListener('click', spin);
+        
+        // 启动应用
+        init();
+    </script>
+</body>
+</html>
