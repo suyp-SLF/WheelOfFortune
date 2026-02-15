@@ -2,169 +2,174 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>WhirlWin - 幸运大转盘</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=none">
+    <title>WhirlWin - Online Spinner</title>
     <style>
+        :root {
+            --bg: #f8f9fa;
+            --primary: #ff4757;
+            --dark: #2f3542;
+        }
         body {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 100vh; margin: 0; background: #f8f9fa; font-family: system-ui, sans-serif;
+            margin: 0; display: flex; flex-direction: column; align-items: center; 
+            background: var(--bg); font-family: -apple-system, sans-serif;
+            touch-action: manipulation;
         }
-        .controls { margin-bottom: 20px; display: flex; gap: 10px; }
+        h1 { margin: 20px 0; color: var(--dark); font-size: 1.5rem; }
+
+        /* 选项卡按钮适配 */
+        .controls {
+            display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center;
+            padding: 0 10px;
+        }
         .tab-btn {
-            padding: 8px 16px; border: none; background: #ddd; border-radius: 20px;
-            cursor: pointer; font-weight: bold;
+            padding: 8px 16px; border: none; background: white; border-radius: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; transition: 0.2s;
+            font-size: 14px; color: #57606f;
         }
-        .tab-btn.active { background: #ff4757; color: white; }
-        
-        .wheel-box { position: relative; width: 400px; height: 400px; }
-        canvas { width: 100%; height: 100%; }
+        .tab-btn.active { background: var(--primary); color: white; }
+
+        /* 转盘容器：响应式 */
+        .wheel-container {
+            position: relative; width: 90vw; height: 90vw; max-width: 450px; max-height: 450px;
+        }
+        canvas { width: 100%; height: 100%; border-radius: 50%; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
 
         /* 指针 */
         .pointer {
-            position: absolute; top: 50%; left: 50%; width: 60px; height: 60px;
-            transform: translate(-50%, -50%); cursor: pointer; z-index: 10;
-            background: #333; border-radius: 50%; color: white;
-            display: flex; align-items: center; justify-content: center; font-weight: bold;
+            position: absolute; top: 50%; left: 50%; width: 50px; height: 50px;
+            transform: translate(-50%, -50%); z-index: 10; cursor: pointer;
+        }
+        .pointer-body {
+            width: 100%; height: 100%; background: var(--dark); border-radius: 50%;
+            color: white; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 14px; border: 3px solid white;
         }
         .pointer::after {
-            content: ""; position: absolute; top: -20px; left: 15px;
-            border-left: 15px solid transparent; border-right: 15px solid transparent;
-            border-bottom: 30px solid #333;
+            content: ""; position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+            border-left: 12px solid transparent; border-right: 12px solid transparent;
+            border-bottom: 25px solid var(--dark);
         }
-        #resultText { margin-top: 30px; font-size: 1.5rem; font-weight: bold; color: #ff4757; }
+
+        #result { margin-top: 30px; font-size: 1.25rem; font-weight: bold; color: var(--primary); text-align: center; height: 1.5em; }
     </style>
 </head>
 <body>
 
-    <div class="controls" id="btnGroup"></div>
+    <h1>WhirlWin Spinner</h1>
 
-    <div class="wheel-box">
+    <div class="controls" id="btnGroup">加载中...</div>
+
+    <div class="wheel-container">
         <canvas id="wheelCanvas" width="800" height="800"></canvas>
-        <div class="pointer" id="spinBtn">GO!</div>
+        <div class="pointer" id="spinBtn">
+            <div class="pointer-body">GO!</div>
+        </div>
     </div>
 
-    <div id="resultText">点击中间开始</div>
+    <div id="result">选择模式，开启好运</div>
 
     <script>
-        // 1. 这里就是你的“配置文件”
-        const wheelConfigs = {
-            "food": {
-                "name": "中午吃啥",
-                "prizes": [
-                    { "text": "火锅", "color": "#e74c3c" },
-                    { "text": "汉堡", "color": "#f1c40f" },
-                    { "text": "拉面", "color": "#3498db" },
-                    { "text": "沙拉", "color": "#2ecc71" },
-                    { "text": "寿司", "color": "#9b59b6" },
-                    { "text": "烧烤", "color": "#e67e22" }
-                ]
-            },
-            "fun": {
-                "name": "周末去哪",
-                "prizes": [
-                    { "text": "宅在家", "color": "#95a5a6" },
-                    { "text": "看电影", "color": "#d35400" },
-                    { "text": "去爬山", "color": "#27ae60" },
-                    { "text": "逛街", "color": "#ff6b6b" }
-                ]
-            }
-        };
-
         const canvas = document.getElementById('wheelCanvas');
         const ctx = canvas.getContext('2d');
-        const spinBtn = document.getElementById('spinBtn');
-        const resultText = document.getElementById('resultText');
+        const resultText = document.getElementById('result');
         const btnGroup = document.getElementById('btnGroup');
 
-        let currentKey = Object.keys(wheelConfigs)[0];
+        let wheelConfigs = {};
+        let currentKey = "";
         let currentAngle = 0;
         let isSpinning = false;
 
-        // 初始化按钮
-        function initButtons() {
-            btnGroup.innerHTML = '';
-            Object.keys(wheelConfigs).forEach(key => {
-                const btn = document.createElement('button');
-                btn.className = `tab-btn ${key === currentKey ? 'active' : ''}`;
-                btn.innerText = wheelConfigs[key].name;
-                btn.onclick = () => {
-                    if (isSpinning) return;
-                    currentKey = key;
-                    currentAngle = 0;
-                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    draw();
-                };
-                btnGroup.appendChild(btn);
-            });
+        // 加载 GitHub 上的本地 JSON
+        async function init() {
+            try {
+                // 使用相对路径，GitHub Pages 兼容性最好
+                const res = await fetch('./config.json');
+                if (!res.ok) throw new Error();
+                wheelConfigs = await res.json();
+                
+                btnGroup.innerHTML = '';
+                Object.keys(wheelConfigs).forEach((key, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = `tab-btn ${i === 0 ? 'active' : ''}`;
+                    btn.innerText = wheelConfigs[key].name;
+                    btn.onclick = () => switchWheel(key, btn);
+                    btnGroup.appendChild(btn);
+                    if(i === 0) currentKey = key;
+                });
+                draw();
+            } catch (e) {
+                resultText.innerText = "配置加载失败，请检查文件";
+            }
         }
 
-        // 绘制逻辑
+        function switchWheel(key, btn) {
+            if (isSpinning) return;
+            currentKey = key;
+            currentAngle = 0;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            resultText.innerText = "已准备好: " + wheelConfigs[key].name;
+            draw();
+        }
+
         function draw() {
             const prizes = wheelConfigs[currentKey].prizes;
-            const num = prizes.length;
-            const arc = (Math.PI * 2) / num;
-            
+            const arc = (Math.PI * 2) / prizes.length;
             ctx.clearRect(0, 0, 800, 800);
-            
+
             prizes.forEach((p, i) => {
                 const angle = currentAngle + i * arc;
-                
-                // 画扇形
                 ctx.beginPath();
                 ctx.fillStyle = p.color;
                 ctx.moveTo(400, 400);
                 ctx.arc(400, 400, 380, angle, angle + arc);
                 ctx.fill();
+                ctx.strokeStyle = "rgba(255,255,255,0.4)";
+                ctx.lineWidth = 2;
                 ctx.stroke();
 
-                // 写字
                 ctx.save();
                 ctx.translate(400, 400);
                 ctx.rotate(angle + arc / 2);
                 ctx.fillStyle = "white";
-                ctx.font = "bold 40px Arial";
+                ctx.font = "bold 32px sans-serif";
                 ctx.textAlign = "right";
-                ctx.fillText(p.text, 350, 15);
+                ctx.fillText(p.text, 350, 10);
                 ctx.restore();
             });
         }
 
-        // 旋转逻辑
-        function spin() {
-            if (isSpinning) return;
+        document.getElementById('spinBtn').onclick = () => {
+            if (isSpinning || !currentKey) return;
             isSpinning = true;
-            
-            const duration = 3000;
+            resultText.innerText = "正在旋转...";
+
+            const duration = 4000;
             const startAngle = currentAngle;
-            const rotation = Math.PI * 2 * (10 + Math.random() * 5);
-            const start = performance.now();
+            const rotateAngle = Math.PI * 2 * (10 + Math.random() * 5);
+            const startTime = performance.now();
 
             function animate(now) {
-                const p = Math.min((now - start) / duration, 1);
-                const ease = 1 - Math.pow(1 - p, 3); // 减速效果
-                currentAngle = startAngle + rotation * ease;
+                const p = Math.min((now - startTime) / duration, 1);
+                const ease = 1 - Math.pow(1 - p, 4);
+                currentAngle = startAngle + rotateAngle * ease;
                 draw();
-
-                if (p < 1) {
-                    requestAnimationFrame(animate);
-                } else {
+                if (p < 1) requestAnimationFrame(animate);
+                else {
                     isSpinning = false;
-                    // 计算结果
                     const prizes = wheelConfigs[currentKey].prizes;
                     const arc = (Math.PI * 2) / prizes.length;
-                    // 修正角度计算中奖项（指针在12点钟方向）
                     const actualAngle = (currentAngle + Math.PI/2) % (Math.PI * 2);
                     const idx = prizes.length - Math.floor(actualAngle / arc) - 1;
                     const finalIdx = (idx + prizes.length) % prizes.length;
-                    resultText.innerText = "结果是：" + prizes[finalIdx].text;
+                    resultText.innerText = "🎯 结果是: " + prizes[finalIdx].text;
                 }
             }
             requestAnimationFrame(animate);
-        }
+        };
 
-        spinBtn.onclick = spin;
-        initButtons();
-        draw();
+        init();
     </script>
 </body>
 </html>
