@@ -8,13 +8,14 @@
       { "text": "晴天出游1次", "color": "#feca57" },
       { "text": "洗碗工1日", "color": "#54a0ff" },
       { "text": "电影时光1+h", "color": "#34a0ff" },
+      { "text": "非正式约会1次", "color": "#88a0ff" },
       { "text": "情趣服务1次", "color": "#8c7ae6" }
     ]
   },
   "game": {
     "name": "大胖wishes",
     "prizes": [
-      { "text": "真心话", "color": "#00d2d3" },
+      { "text": "情趣服务1次", "color": "#00d2d3" },
       { "text": "大冒险", "color": "#ff6b6b" },
       { "text": "罚一杯", "color": "#48dbfb" },
       { "text": "唱首歌", "color": "#ff9ff3" },
