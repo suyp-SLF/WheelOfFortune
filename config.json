@@ -15,11 +15,9 @@
   "game": {
     "name": "大胖wishes",
     "prizes": [
-      { "text": "情趣服务1次", "color": "#00d2d3" },
-      { "text": "大冒险", "color": "#ff6b6b" },
-      { "text": "罚一杯", "color": "#48dbfb" },
-      { "text": "唱首歌", "color": "#ff9ff3" },
-      { "text": "模仿秀", "color": "#f368e0" }
+      { "text": "情趣服务1次", "color": "#8c7ae6" }
+      { "text": "蒙眼并由对方喂食/喂酒", "color": "#1e272e" },
+      { "text": "全身敏感带的羽毛试探", "color": "#0984e3" },
     ]
   }
 }
