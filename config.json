@@ -1,17 +1,18 @@
 {
   "food": {
-    "name": "中午吃啥",
+    "name": "二胖wishes",
     "prizes": [
-      { "text": "黄焖鸡", "color": "#ff9f43" },
-      { "text": "麻辣烫", "color": "#ee5253" },
-      { "text": "萨莉亚", "color": "#1dd1a1" },
-      { "text": "麦当劳", "color": "#feca57" },
-      { "text": "便利店", "color": "#54a0ff" },
-      { "text": "减脂沙拉", "color": "#8c7ae6" }
+      { "text": "胡闹厨房1局", "color": "#ff9f43" },
+      { "text": "按摩服务45min", "color": "#ee5253" },
+      { "text": "睡前故事1晚", "color": "#1dd1a1" },
+      { "text": "晴天出游1次", "color": "#feca57" },
+      { "text": "洗碗工1日", "color": "#54a0ff" },
+      { "text": "电影时光1+h", "color": "#34a0ff" },
+      { "text": "情趣服务1次", "color": "#8c7ae6" }
     ]
   },
   "game": {
-    "name": "真心话大冒险",
+    "name": "大胖wishes",
     "prizes": [
       { "text": "真心话", "color": "#00d2d3" },
       { "text": "大冒险", "color": "#ff6b6b" },
