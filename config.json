@@ -1,0 +1,31 @@
+{
+  "food": {
+    "name": "中午吃啥",
+    "prizes": [
+      { "text": "黄焖鸡", "color": "#ff9f43" },
+      { "text": "麻辣烫", "color": "#ee5253" },
+      { "text": "萨莉亚", "color": "#1dd1a1" },
+      { "text": "麦当劳", "color": "#feca57" },
+      { "text": "便利店", "color": "#54a0ff" },
+      { "text": "减脂沙拉", "color": "#8c7ae6" }
+    ]
+  },
+  "game": {
+    "name": "真心话大冒险",
+    "prizes": [
+      { "text": "真心话", "color": "#00d2d3" },
+      { "text": "大冒险", "color": "#ff6b6b" },
+      { "text": "喝一杯", "color": "#48dbfb" },
+      { "text": "跳过", "color": "#ff9ff3" }
+    ]
+  },
+  "work": {
+    "name": "谁去开会",
+    "prizes": [
+      { "text": "张三", "color": "#576574" },
+      { "text": "李四", "color": "#222f3e" },
+      { "text": "王五", "color": "#576574" },
+      { "text": "赵六", "color": "#222f3e" }
+    ]
+  }
+}
